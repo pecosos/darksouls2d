@@ -6555,10 +6555,62 @@ case 'flank': {
     world.style.transform = `translate3d(${-camera.x}px, ${-camera.y}px, 0)`;
   }
 
+
+  /* ============================================================
+   PAUSA — pestaña oculta y pantalla de girar dispositivo
+   ============================================================ */
+let gamePaused  = false;
+let gameStarted = false;
+let rafId       = null;  
+
+function shouldGameBePaused() {
+  // 1) Pestaña oculta
+  if (document.hidden) return true;
+
+  // 2) Overlay "Gira el dispositivo" visible
+  //    (solo en móvil/tablet Y en vertical)
+  if (isTouchDevice && matchMedia('(orientation: portrait)').matches) {
+    return true;
+  }
+
+  return false;
+}
+
+function pauseGame() {
+  if (gamePaused) return;
+  gamePaused = true;
+  // Cancelar cualquier tick pendiente para que no se re-ejecute
+  if (rafId !== null) {
+    cancelAnimationFrame(rafId);
+    rafId = null;
+  }
+}
+
+function resumeGame() {
+  if (!gamePaused) return;
+  gamePaused = false;
+  if (!gameStarted) return;
+  // Cancelar por si quedó algún tick pendiente (doble disparo)
+  if (rafId !== null) cancelAnimationFrame(rafId);
+  last = performance.now();
+  rafId = requestAnimationFrame(tick);
+}
+
+function updatePauseState() {
+  if (shouldGameBePaused()) pauseGame();
+  else resumeGame();
+}
+
+document.addEventListener('visibilitychange', updatePauseState);
+window.addEventListener('resize', updatePauseState);
+window.addEventListener('orientationchange', updatePauseState);
+
+
   /* ============================================================
      BUCLE PRINCIPAL
      ============================================================ */
   function tick(now) {
+    if (gamePaused) return;
     const dt = Math.min((now - last) / 1000, 0.05);
     last = now;
 
@@ -6738,8 +6790,9 @@ case 'flank': {
     updateCamera();
     updateHUD();
 
-    requestAnimationFrame(tick);
+       rafId = requestAnimationFrame(tick);
   }
+  
 
     /* ============================================================
      PORTALES — detección de entrada
@@ -7177,7 +7230,12 @@ function updateTouchInteractButton() {
     updateHUD();
 
     last = performance.now();
-    requestAnimationFrame(tick);
+gameStarted = true;
+if (shouldGameBePaused()) {
+  gamePaused = true;
+} else {
+  rafId = requestAnimationFrame(tick);
+}
 
     // Cartel de bienvenida a la zona inicial (con un pequeño retardo)
     setTimeout(() => mostrarTituloZona(currentZone), 350);
