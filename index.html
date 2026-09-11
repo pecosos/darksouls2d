@@ -2439,6 +2439,84 @@ body.touch-mode { -webkit-touch-callout: none; }
   .touch-btn.interact { width: 72px; height: 72px; bottom: 116px; }
 }
 
+/* ============================================================
+   OVERLAY "GIRA EL DISPOSITIVO" (solo en vertical y táctil)
+   ============================================================ */
+.rotate-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20000;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 50% 50%, #1b2740, #070a11 70%);
+  color: #c9d6ee;
+  text-align: center;
+  padding: 24px;
+  gap: 16px;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Solo aparece en móvil/tablet Y en vertical */
+@media (orientation: portrait) {
+  body.touch-mode .rotate-overlay { display: flex; }
+}
+
+.rotate-overlay .rotate-icon {
+  font-size: 72px;
+  line-height: 1;
+  color: #eaf4ff;
+  text-shadow: 0 0 24px rgba(160, 210, 255, .8);
+  animation: rotateHint 2.4s ease-in-out infinite;
+}
+
+@keyframes rotateHint {
+  0%,  15%  { transform: rotate(0deg); }
+  50%, 65%  { transform: rotate(90deg); }
+  100%      { transform: rotate(90deg); }
+}
+
+.rotate-overlay .rotate-text {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: .20em;
+  text-transform: uppercase;
+  color: #eaf4ff;
+  text-shadow: 0 0 14px rgba(160, 210, 255, .7);
+}
+
+.rotate-overlay .rotate-sub {
+  font-size: 12px;
+  color: #8fa5c8;
+  letter-spacing: .06em;
+  max-width: 260px;
+  line-height: 1.5;
+}
+
+.rotate-overlay button {
+  margin-top: 10px;
+  padding: 12px 22px;
+  border-radius: 12px;
+  border: 1px solid rgba(160, 220, 255, .55);
+  background: rgba(48, 118, 205, .25);
+  color: #eaf4ff;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: transform .12s ease, background .12s ease;
+}
+.rotate-overlay button:active {
+  transform: scale(.94);
+  background: rgba(80, 150, 230, .45);
+}
+
+
 </style>
 </head>
 <body>
@@ -6822,6 +6900,43 @@ case 'flank': {
   addEventListener('resize', updateCamera);
 
 
+
+/* ============================================================
+   ORIENTACIÓN — intenta bloquear horizontal + botón fullscreen
+   ============================================================ */
+function initRotateOverlay() {
+  const btn = document.getElementById('rotateFullscreen');
+  if (!btn) return;
+
+  btn.addEventListener('click', async () => {
+    try {
+      // 1) Pedir pantalla completa
+      const el = document.documentElement;
+      if (el.requestFullscreen) {
+        await el.requestFullscreen();
+      } else if (el.webkitRequestFullscreen) {
+        el.webkitRequestFullscreen();
+      }
+
+      // 2) Intentar bloquear orientación horizontal
+      //    (funciona en Chrome Android con fullscreen activo)
+      if (screen.orientation && screen.orientation.lock) {
+        try {
+          await screen.orientation.lock('landscape');
+        } catch (_) { /* el navegador no lo soporta → overlay sigue */ }
+      }
+    } catch (_) { /* el usuario canceló fullscreen */ }
+  });
+
+  // 3) Si el navegador soporta bloqueo automático sin gesto,
+  //    intentarlo al entrar. Casi siempre requerirá fullscreen, así que
+  //    lo dejamos al botón, pero lo intentamos por si acaso.
+  if (screen.orientation && screen.orientation.lock) {
+    screen.orientation.lock('landscape').catch(() => {});
+  }
+}
+
+
   /* ============================================================
    CONTROLES TÁCTILES — inicialización
    ============================================================ */
@@ -7023,6 +7138,7 @@ function updateTouchInteractButton() {
     setTimeout(() => mostrarTituloZona(currentZone), 350);
 
     initTouchControls();
+initRotateOverlay();   // ← añade esta línea
 
 
   }
@@ -7030,5 +7146,19 @@ function updateTouchInteractButton() {
 
   requestAnimationFrame(init);
 </script>
+
+<!-- ============================================================
+     OVERLAY "GIRA EL DISPOSITIVO"
+     ============================================================ -->
+<div class="rotate-overlay" id="rotateOverlay">
+  <div class="rotate-icon">📱</div>
+  <div class="rotate-text">Gira el dispositivo</div>
+  <div class="rotate-sub">
+    Este juego se juega en horizontal. Gira tu teléfono o tablet para continuar.
+  </div>
+  <button id="rotateFullscreen">Probar pantalla completa</button>
+</div>
+
+
 </body>
 </html>
