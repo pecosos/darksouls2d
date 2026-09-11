@@ -742,16 +742,17 @@
     .pickup-window-name { font-size: 13px; }
   }
 
-  .world {
-    position: absolute;
-    top: 0; left: 0;
-    width: 2500px; height: 2500px;
-    background:
-      linear-gradient(rgba(120,170,255,.09) 1px, transparent 1px) 0 0 / 100% 40px,
-      linear-gradient(90deg, rgba(120,170,255,.09) 1px, transparent 1px) 0 0 / 40px 100%,
-      linear-gradient(160deg, #1a2438, #0e1522);
-    will-change: transform;
-  }
+.world {
+  position: absolute;
+  top: 0; left: 0;
+  width: 2500px; height: 2500px;
+  background:
+    linear-gradient(rgba(120,170,255,.09) 1px, transparent 1px) 0 0 / 100% 40px,
+    linear-gradient(90deg, rgba(120,170,255,.09) 1px, transparent 1px) 0 0 / 40px 100%,
+    linear-gradient(160deg, #1a2438, #0e1522);
+  will-change: transform;
+  contain: strict;
+}
   .world::after {
     content: "";
     position: absolute; inset: 0;
