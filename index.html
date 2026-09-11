@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Guerrero vs Enemigo con IA estratégica</title>
 <style>
   * { box-sizing: border-box; }
@@ -2280,6 +2280,165 @@
   pointer-events: none;
 }
 
+/* ============================================================
+   CONTROLES TÁCTILES
+   ============================================================ */
+.touch-controls {
+  position: absolute;
+  inset: 0;
+  z-index: 200;
+  pointer-events: none;
+  touch-action: none;
+  display: none;
+}
+body.touch-mode .touch-controls { display: block; pointer-events: auto; }
+
+/* En móvil el dpad decorativo se mueve arriba-derecha y se encoge */
+body.touch-mode .dpad {
+  left: auto;
+  right: 10px;
+  top: 10px;
+  bottom: auto;
+  transform: scale(0.7);
+  transform-origin: top right;
+  pointer-events: auto;
+}
+body.touch-mode .viewport { cursor: default; }
+body.touch-mode .viewport { touch-action: none; }
+body.touch-mode { -webkit-touch-callout: none; }
+
+/* ---------- Joystick ---------- */
+.joystick-zone {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 50%;
+  height: 60%;
+  pointer-events: auto;
+  touch-action: none;
+}
+.joystick-base {
+  position: absolute;
+  width: 130px;
+  height: 130px;
+  margin: -65px 0 0 -65px;
+  border-radius: 50%;
+  border: 2px solid rgba(120, 170, 255, .35);
+  background: radial-gradient(circle, rgba(18,30,52,.28), rgba(18,30,52,.08));
+  box-shadow: inset 0 0 22px rgba(80,140,255,.16);
+  opacity: 0;
+  transition: opacity .14s ease;
+  pointer-events: none;
+  left: -9999px;   /* fuera de pantalla hasta que se toque */
+}
+.joystick-knob {
+  position: absolute;
+  width: 62px;
+  height: 62px;
+  margin: -31px 0 0 -31px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, rgba(180,220,255,.75), rgba(80,140,220,.55));
+  border: 1px solid rgba(200,235,255,.85);
+  box-shadow:
+    0 0 18px rgba(120,200,255,.75),
+    inset 0 0 10px rgba(255,255,255,.3);
+  opacity: 0;
+  transition: opacity .14s ease;
+  pointer-events: none;
+  left: -9999px;
+}
+.joystick-base.active,
+.joystick-knob.active { opacity: 1; }
+
+/* ---------- Botones de acción ---------- */
+.touch-btn {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 2px solid rgba(120, 170, 255, .45);
+  background: radial-gradient(circle at 35% 30%, rgba(40,70,130,.75), rgba(18,30,52,.65));
+  color: #eaf4ff;
+  font-weight: 800;
+  text-shadow: 0 0 8px rgba(160,210,255,.7);
+  box-shadow:
+    inset 0 0 14px rgba(80,140,255,.22),
+    0 0 14px rgba(60,110,200,.25);
+  pointer-events: auto;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: transform .08s ease, background .08s ease,
+              box-shadow .08s ease, border-color .08s ease;
+  font-size: 26px;
+  line-height: 1;
+}
+.touch-btn.pressed,
+.touch-btn:active {
+  transform: scale(.92);
+  background: radial-gradient(circle at 35% 30%, rgba(120,180,255,.9), rgba(60,110,200,.8));
+  border-color: rgba(220,240,255,.95);
+  box-shadow:
+    inset 0 0 18px rgba(160,210,255,.55),
+    0 0 26px rgba(120,200,255,.9);
+}
+
+/* Grid 2×2 de acciones (abajo-derecha) */
+.touch-btn.attack  { right: 20px;  bottom: 20px;  width: 96px; height: 96px; font-size: 40px; }
+.touch-btn.defend  { right: 20px;  bottom: 130px; width: 78px; height: 78px; }
+.touch-btn.dash    { right: 130px; bottom: 20px;  width: 78px; height: 78px; }
+.touch-btn.parry   { right: 130px; bottom: 130px; width: 78px; height: 78px; }
+
+/* Fila de botones pequeños arriba */
+.touch-btn.lock { right: 20px;  bottom: 222px; width: 56px; height: 56px; font-size: 22px; }
+.touch-btn.bag  { right: 86px;  bottom: 222px; width: 56px; height: 56px; font-size: 22px; }
+.touch-btn.item { right: 152px; bottom: 222px; width: 56px; height: 56px; font-size: 22px; }
+
+/* Botón contextual E (aparece solo cuando hay algo que interactuar) */
+.touch-btn.interact {
+  right: 50%;
+  bottom: 130px;
+  transform: translateX(50%);
+  width: 82px;
+  height: 82px;
+  font-size: 30px;
+  background: radial-gradient(circle at 35% 30%, rgba(255,225,130,.9), rgba(190,130,20,.7));
+  border-color: rgba(255,235,160,.95);
+  box-shadow:
+    inset 0 0 14px rgba(255,220,120,.45),
+    0 0 22px rgba(255,190,60,.75);
+  color: #2a1800;
+  text-shadow: 0 1px 2px rgba(255,255,255,.5);
+  display: none;
+}
+.touch-btn.interact.show { display: flex; }
+.touch-btn.interact.pressed { transform: translateX(50%) scale(.9); }
+
+/* Safe-area para iPhone con notch */
+@supports (padding: max(0px)) {
+  .touch-btn.attack { right: max(20px, env(safe-area-inset-right)); bottom: max(20px, env(safe-area-inset-bottom)); }
+  .touch-btn.defend { right: max(20px, env(safe-area-inset-right)); bottom: max(130px, calc(env(safe-area-inset-bottom) + 130px)); }
+  .touch-btn.dash   { right: max(130px, calc(env(safe-area-inset-right) + 130px)); bottom: max(20px, env(safe-area-inset-bottom)); }
+  .touch-btn.parry  { right: max(130px, calc(env(safe-area-inset-right) + 130px)); bottom: max(130px, calc(env(safe-area-inset-bottom) + 130px)); }
+  .touch-btn.lock   { right: max(20px, env(safe-area-inset-right)); bottom: max(222px, calc(env(safe-area-inset-bottom) + 222px)); }
+  .touch-btn.bag    { right: max(86px, calc(env(safe-area-inset-right) + 86px)); bottom: max(222px, calc(env(safe-area-inset-bottom) + 222px)); }
+  .touch-btn.item   { right: max(152px, calc(env(safe-area-inset-right) + 152px)); bottom: max(222px, calc(env(safe-area-inset-bottom) + 222px)); }
+  .touch-btn.interact { bottom: max(130px, calc(env(safe-area-inset-bottom) + 130px)); }
+}
+
+/* Pantallas muy pequeñas: reducir un poco */
+@media (max-width: 480px), (max-height: 520px) {
+  .touch-btn.attack { width: 84px; height: 84px; font-size: 34px; }
+  .touch-btn.defend { width: 68px; height: 68px; bottom: 116px; }
+  .touch-btn.dash   { width: 68px; height: 68px; right: 116px; }
+  .touch-btn.parry  { width: 68px; height: 68px; right: 116px; bottom: 116px; }
+  .touch-btn.lock   { bottom: 196px; }
+  .touch-btn.bag    { bottom: 196px; }
+  .touch-btn.item   { bottom: 196px; }
+  .touch-btn.interact { width: 72px; height: 72px; bottom: 116px; }
+}
+
 </style>
 </head>
 <body>
@@ -2495,6 +2654,30 @@
       <div class="dpad-slot slot-down"  data-cat="bottle"></div>
     </div>
 
+    
+    <!-- ============================================================
+         CONTROLES TÁCTILES (solo se activan en móvil/tablet)
+         ============================================================ -->
+    <div class="touch-controls" id="touchControls">
+
+      <div class="joystick-zone" id="joystickZone"></div>
+      <div class="joystick-base" id="joystickBase"></div>
+      <div class="joystick-knob" id="joystickKnob"></div>
+
+      <button class="touch-btn attack"   id="btnAttack"   aria-label="Atacar">⚔️</button>
+      <button class="touch-btn defend"   id="btnDefend"   aria-label="Defender">🛡️</button>
+      <button class="touch-btn dash"     id="btnDash"     aria-label="Dash">⚡</button>
+      <button class="touch-btn parry"    id="btnParry"    aria-label="Parry">✋</button>
+
+      <button class="touch-btn lock"     id="btnLock"     aria-label="Fijar objetivo">🎯</button>
+      <button class="touch-btn bag"      id="btnBag"      aria-label="Inventario">🎒</button>
+      <button class="touch-btn item"     id="btnItem"     aria-label="Usar objeto">🧪</button>
+
+      <button class="touch-btn interact" id="btnInteract" aria-label="Interactuar">E</button>
+
+    </div>
+    <!-- 👆 FIN de los controles táctiles -->
+
   </div>
 
   <div class="inventory-overlay" id="inventoryOverlay">
@@ -2571,6 +2754,20 @@
   const WORLD_SIZE = 2500;
   const CH_W = 44;
   const CH_H = 64;
+
+  /* ============================================================
+   DETECCIÓN DE DISPOSITIVO TÁCTIL
+   ============================================================ */
+const isTouchDevice =
+  (typeof matchMedia !== 'undefined' && matchMedia('(pointer: coarse)').matches) ||
+  ('ontouchstart' in window) ||
+  (navigator.maxTouchPoints > 0);
+
+if (isTouchDevice) {
+  document.addEventListener('DOMContentLoaded', () => {
+    document.body.classList.add('touch-mode');
+  });
+}
 
   const BODY_RADIUS  = 22;
   const MIN_DISTANCE = BODY_RADIUS * 2;
@@ -3680,7 +3877,15 @@ const ZONE_INFO = {
 
 let zoneTitleTimer = null;
 
-  
+  /* ============================================================
+   ESTADO DE ENTRADA TÁCTIL
+   ============================================================ */
+const moveVec = {
+  x: 0,
+  y: 0,
+  active: false,
+  magnitude: 0,
+};
 
   const camera = { x: 0, y: 0 };
   const keys   = { up: false, down: false, left: false, right: false };
@@ -3722,29 +3927,36 @@ let zoneTitleTimer = null;
   /* ============================================================
      APUNTADO (flecha)
      ============================================================ */
-    function updateAimAngle() {
-    if (lockedOn && !p.dead) {
-      const tgt = getLockedTarget();
-      if (tgt) {
-        const pcx = p.x + CH_W / 2;
-        const pcy = p.y + CH_H / 2;
-        const tcx = tgt.x + CH_W / 2;
-        const tcy = tgt.y + CH_H / 2;
-        p.aimAngle = Math.atan2(tcy - pcy, tcx - pcx);
-        return;
-      }
+  function updateAimAngle() {
+  if (lockedOn && !p.dead) {
+    const tgt = getLockedTarget();
+    if (tgt) {
+      const pcx = p.x + CH_W / 2;
+      const pcy = p.y + CH_H / 2;
+      const tcx = tgt.x + CH_W / 2;
+      const tcy = tgt.y + CH_H / 2;
+      p.aimAngle = Math.atan2(tcy - pcy, tcx - pcx);
+      return;
     }
+  }
 
-    let dx = 0, dy = 0;
+  let dx = 0, dy = 0;
+  if (moveVec.active && moveVec.magnitude > 0.15) {
+    dx = moveVec.x;
+    dy = moveVec.y;
+  } else {
     if (keys.left)  dx -= 1;
     if (keys.right) dx += 1;
     if (keys.up)    dy -= 1;
     if (keys.down)  dy += 1;
-
-    if (dx !== 0 || dy !== 0) {
-      p.aimAngle = Math.atan2(dy, dx);
-    }
   }
+
+  if (dx !== 0 || dy !== 0) {
+    p.aimAngle = Math.atan2(dy, dx);
+  }
+}
+
+    
 
   function renderAimArrow() {
     aimArrowContainer.style.transform = `rotate(${p.aimAngle}rad)`;
@@ -6306,22 +6518,35 @@ case 'flank': {
       }
       else {
         let dx = 0, dy = 0;
-        if (keys.left)  dx -= 1;
-        if (keys.right) dx += 1;
-        if (keys.up)    dy -= 1;
-        if (keys.down)  dy += 1;
+        let useContinuousInput = false;
+
+        if (moveVec.active && moveVec.magnitude > 0.12) {
+          dx = moveVec.x;
+          dy = moveVec.y;
+          useContinuousInput = true;
+        } else {
+          if (keys.left)  dx -= 1;
+          if (keys.right) dx += 1;
+          if (keys.up)    dy -= 1;
+          if (keys.down)  dy += 1;
+        }
 
         const isMoving = dx !== 0 || dy !== 0;
 
         if (isMoving) {
-          const len = Math.hypot(dx, dy);
+          const len = Math.hypot(dx, dy) || 1;
           dx /= len;
           dy /= len;
 
           let speed = p.defending ? SPEED_DEFEND : SPEED;
           if (p.attacking) speed *= 0.55;
 
-          const canRun = shiftHeld && !p.defending && !p.attacking && p.stamina > 0;
+          // Auto-run en táctil: joystick empujado al máximo
+          const wantRun = isTouchDevice
+            ? (useContinuousInput && moveVec.magnitude > 0.85)
+            : shiftHeld;
+
+          const canRun = wantRun && !p.defending && !p.attacking && p.stamina > 0;
           if (canRun) speed *= RUN_MULTIPLIER;
 
           if (canRun !== p.running) {
@@ -6400,6 +6625,7 @@ case 'flank': {
            updatePickupProximity();
     updateBossProximity();
     updateBonfireProximity();
+    updateTouchInteractButton();
     updateGateProximity(dt);
 
         renderPlayer();
@@ -6548,7 +6774,8 @@ case 'flank': {
   /* ============================================================
      RATÓN
      ============================================================ */
-  viewport.addEventListener('mousedown', ev => {
+ viewport.addEventListener('mousedown', ev => {
+    if (isTouchDevice) return;   // ← añade esta línea
     if (inventoryOpen || itemPickerOpen || pickupWindowOpen) return;
     if (ev.button === 0) {
       ev.preventDefault();
@@ -6577,17 +6804,161 @@ case 'flank': {
   viewport.addEventListener('contextmenu', ev => ev.preventDefault());
 
   addEventListener('blur', () => {
-    for (const k in keys) keys[k] = false;
-    shiftHeld = false;
-    setDefending(false);
-    if (p.running) {
-      p.running = false;
-      player.classList.remove('running');
-    }
-  });
+  for (const k in keys) keys[k] = false;
+  shiftHeld = false;
+  setDefending(false);
+  // NUEVO: resetear joystick
+  moveVec.x = 0; moveVec.y = 0; moveVec.active = false; moveVec.magnitude = 0;
+  const jb = document.getElementById('joystickBase');
+  const jk = document.getElementById('joystickKnob');
+  if (jb) jb.classList.remove('active');
+  if (jk) jk.classList.remove('active');
+  if (p.running) {
+    p.running = false;
+    player.classList.remove('running');
+  }
+});
 
   addEventListener('resize', updateCamera);
 
+
+  /* ============================================================
+   CONTROLES TÁCTILES — inicialización
+   ============================================================ */
+function initTouchControls() {
+  if (!isTouchDevice) return;
+
+  const zone = document.getElementById('joystickZone');
+  const base = document.getElementById('joystickBase');
+  const knob = document.getElementById('joystickKnob');
+  if (!zone || !base || !knob) return;
+
+  let joyPointerId = null;
+  let originX = 0, originY = 0;
+  const MAX_RADIUS = 58;
+
+  zone.addEventListener('pointerdown', ev => {
+    if (joyPointerId !== null) return;
+    if (inventoryOpen || itemPickerOpen || pickupWindowOpen) return;
+    if (p.dead || p.stunTimer > 0) return;
+
+    joyPointerId = ev.pointerId;
+    try { zone.setPointerCapture(ev.pointerId); } catch (_) {}
+
+    const rect = zone.getBoundingClientRect();
+    originX = ev.clientX - rect.left;
+    originY = ev.clientY - rect.top;
+
+    base.style.left = originX + 'px';
+    base.style.top  = originY + 'px';
+    knob.style.left = originX + 'px';
+    knob.style.top  = originY + 'px';
+    base.classList.add('active');
+    knob.classList.add('active');
+    ev.preventDefault();
+  }, { passive: false });
+
+  zone.addEventListener('pointermove', ev => {
+    if (ev.pointerId !== joyPointerId) return;
+
+    const rect = zone.getBoundingClientRect();
+    let dx = (ev.clientX - rect.left) - originX;
+    let dy = (ev.clientY - rect.top)  - originY;
+
+    const dist = Math.hypot(dx, dy);
+    if (dist > MAX_RADIUS) {
+      dx = (dx / dist) * MAX_RADIUS;
+      dy = (dy / dist) * MAX_RADIUS;
+    }
+
+    knob.style.left = (originX + dx) + 'px';
+    knob.style.top  = (originY + dy) + 'px';
+
+    const mag = Math.min(1, dist / MAX_RADIUS);
+    if (mag > 0.12) {
+      const nrm = dist || 1;
+      moveVec.x = dx / nrm;
+      moveVec.y = dy / nrm;
+      moveVec.magnitude = mag;
+      moveVec.active = true;
+    } else {
+      moveVec.x = 0; moveVec.y = 0;
+      moveVec.magnitude = 0;
+      moveVec.active = false;
+    }
+    ev.preventDefault();
+  }, { passive: false });
+
+  const endJoy = ev => {
+    if (ev.pointerId !== joyPointerId) return;
+    joyPointerId = null;
+    moveVec.x = 0; moveVec.y = 0;
+    moveVec.active = false; moveVec.magnitude = 0;
+    base.classList.remove('active');
+    knob.classList.remove('active');
+  };
+  zone.addEventListener('pointerup', endJoy);
+  zone.addEventListener('pointercancel', endJoy);
+
+  // -------- Botones --------
+ function bindTap(id, action, alwaysEnabled = false) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.addEventListener('pointerdown', ev => {
+    ev.preventDefault();
+    if (!alwaysEnabled && (inventoryOpen || itemPickerOpen || pickupWindowOpen)) return;
+    el.classList.add('pressed');
+    try { el.setPointerCapture(ev.pointerId); } catch (_) {}
+  }, { passive: false });
+  el.addEventListener('pointerup', ev => {
+    ev.preventDefault();
+    el.classList.remove('pressed');
+    if (!alwaysEnabled && (inventoryOpen || itemPickerOpen || pickupWindowOpen)) return;
+    action();
+  }, { passive: false });
+  el.addEventListener('pointercancel', () => el.classList.remove('pressed'));
+  el.addEventListener('pointerleave', () => el.classList.remove('pressed'));
+}
+
+  function bindHold(id, onDown, onUp) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('pointerdown', ev => {
+      ev.preventDefault();
+      if (inventoryOpen || itemPickerOpen || pickupWindowOpen) return;
+      el.classList.add('pressed');
+      try { el.setPointerCapture(ev.pointerId); } catch (_) {}
+      onDown();
+    }, { passive: false });
+    const up = () => {
+      el.classList.remove('pressed');
+      if (onUp) onUp();
+    };
+    el.addEventListener('pointerup', up);
+    el.addEventListener('pointercancel', up);
+    el.addEventListener('pointerleave', up);
+  }
+
+  bindTap('btnAttack', () => triggerPlayerAttack());
+  bindHold('btnDefend', () => setDefending(true), () => setDefending(false));
+  bindTap('btnDash',  () => triggerDash());
+  bindTap('btnParry', () => triggerParry());
+  bindTap('btnLock',  () => toggleLock());
+  bindTap('btnBag',   () => toggleInventory(),  true);
+  bindTap('btnItem',  () => useEquippedBottle());
+bindTap('btnInteract', () => handleEInteraction(),  true);
+}
+
+/* Muestra el botón E solo cuando hay algo interactuable cerca */
+function updateTouchInteractButton() {
+  if (!isTouchDevice) return;
+  const el = document.getElementById('btnInteract');
+  if (!el) return;
+
+  const canBonfire = bonfire.near;
+  const canPickup  = !pickup.taken && pickup.near && currentZone === PICKUP_ZONE;
+  el.classList.toggle('show', canBonfire || canPickup);
+}
   /* ============================================================
      INICIO
      ============================================================ */
@@ -6650,6 +7021,10 @@ case 'flank': {
 
     // Cartel de bienvenida a la zona inicial (con un pequeño retardo)
     setTimeout(() => mostrarTituloZona(currentZone), 350);
+
+    initTouchControls();
+
+
   }
   
 
