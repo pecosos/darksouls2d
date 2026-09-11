@@ -107,16 +107,15 @@
     pointer-events: none;
   }
   .dpad-slot {
-    position: relative;
-    border: 2px solid rgba(120, 170, 255, .35);
-    border-radius: 10px;
-    background: rgba(18, 30, 52, .28);
-    box-shadow:
-      inset 0 0 14px rgba(80, 140, 255, .10),
-      0 0 10px rgba(60, 110, 200, .10);
-    backdrop-filter: blur(3px);
-    -webkit-backdrop-filter: blur(3px);
-  }
+  position: relative;
+  border: 2px solid rgba(120, 170, 255, .35);
+  border-radius: 10px;
+  /* Subimos el alpha para compensar la falta de blur */
+  background: rgba(18, 30, 52, .58);
+  box-shadow:
+    inset 0 0 14px rgba(80, 140, 255, .10),
+    0 0 10px rgba(60, 110, 200, .10);
+}
   .slot-up    { grid-column: 2; grid-row: 1; }
   .slot-left  { grid-column: 1; grid-row: 2; }
   .slot-right { grid-column: 3; grid-row: 2; }
@@ -591,18 +590,16 @@
     animation: pickupCorePulse 1.2s ease-in-out infinite;
     pointer-events: none;
   }
-  .pickup-star {
-    position: absolute;
-    left: 50%; top: 50%;
-    color: #ffffff;
-    font-size: 18px;
-    text-shadow:
-      0 0 8px rgba(255,255,255,1),
-      0 0 18px rgba(180,220,255,.9);
-    transform: translate(-50%, -50%);
-    animation: pickupStarSpin 2.4s linear infinite;
-    pointer-events: none;
-  }
+.pickup-star {
+  position: absolute;
+  left: 50%; top: 50%;
+  color: #ffffff;
+  font-size: 18px;
+  transform: translate(-50%, -50%);
+  animation: pickupStarSpin 2.4s linear infinite;
+  pointer-events: none;
+  will-change: transform;
+}
 
   @keyframes pickupGlowPulse {
     0%,100% { transform: scale(1);    opacity: .75; }
@@ -638,12 +635,9 @@
     transition: opacity .18s ease, transform .18s ease;
     pointer-events: none;
     white-space: nowrap;
-    animation: promptBob 1.4s ease-in-out infinite;
+   
   }
-  @keyframes promptBob {
-    0%,100% { margin-top: 0; }
-    50%     { margin-top: -3px; }
-  }
+  
   .pickup.near .pickup-prompt {
     opacity: 1;
     transform: translate(-50%, -10px) scale(1);
@@ -1483,25 +1477,26 @@
     opacity: .9;
   }
 
-  .bonfire-flame {
-    position: absolute;
-    left: 50%;
-    bottom: 22px;
-    width: 22px;
-    height: 34px;
-    margin-left: -11px;
-    background: radial-gradient(ellipse at 50% 90%,
-      #fff6c0 0%,
-      #ffcc44 22%,
-      #ff8820 52%,
-      #e04400 82%,
-      transparent 100%);
-    border-radius: 50% 50% 40% 40% / 70% 70% 30% 30%;
-    filter: drop-shadow(0 0 12px rgba(255, 150, 60, .9));
-    animation: bonfireFlame 0.9s ease-in-out infinite alternate;
-    transform-origin: 50% 100%;
-    pointer-events: none;
-  }
+.bonfire-flame {
+  position: absolute;
+  left: 50%;
+  bottom: 22px;
+  width: 22px;
+  height: 34px;
+  margin-left: -11px;
+  background: radial-gradient(ellipse at 50% 90%,
+    #fff6c0 0%,
+    #ffcc44 22%,
+    #ff8820 52%,
+    #e04400 82%,
+    transparent 100%);
+  border-radius: 50% 50% 40% 40% / 70% 70% 30% 30%;
+  /* Sin filter. El glow lo aporta .bonfire-glow */
+  animation: bonfireFlame 0.9s ease-in-out infinite alternate;
+  transform-origin: 50% 100%;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
 
   .bonfire-flame::after {
     content: "";
@@ -1568,7 +1563,7 @@
     transition: opacity .18s ease, transform .18s ease;
     pointer-events: none;
     white-space: nowrap;
-    animation: promptBob 1.4s ease-in-out infinite;
+    
   }
 
   .bonfire.near-can-rest .bonfire-prompt {
@@ -1720,25 +1715,28 @@
   position: absolute;
   pointer-events: none;
   z-index: 10;
+  /* Gradiente más suave para compensar la falta de blur */
   background: radial-gradient(ellipse at 50% 50%,
-    rgba(255, 255, 255, 0.95) 0%,
-    rgba(255, 255, 255, 0.78) 25%,
-    rgba(235, 245, 255, 0.55) 50%,
-    rgba(210, 230, 255, 0.28) 70%,
-    rgba(190, 215, 255, 0.0) 88%);
-  filter: blur(10px);
+    rgba(255, 255, 255, 0.85) 0%,
+    rgba(255, 255, 255, 0.65) 20%,
+    rgba(235, 245, 255, 0.42) 42%,
+    rgba(210, 230, 255, 0.20) 62%,
+    rgba(190, 215, 255, 0.06) 80%,
+    rgba(190, 215, 255, 0.0) 95%);
   animation: fogSway 4.5s ease-in-out infinite alternate;
+  will-change: transform, opacity;
 }
 
 .fog-gate::before {
   content: "";
   position: absolute;
-  inset: -20px;
+  inset: -30px;
+  /* Halo extra, sin blur */
   background: radial-gradient(ellipse at 50% 50%,
-    rgba(255, 255, 255, 0.55) 0%,
-    rgba(255, 255, 255, 0.15) 45%,
-    transparent 75%);
-  filter: blur(14px);
+    rgba(255, 255, 255, 0.30) 0%,
+    rgba(255, 255, 255, 0.12) 35%,
+    rgba(255, 255, 255, 0.04) 60%,
+    transparent 80%);
   animation: fogSway 3.2s ease-in-out infinite alternate-reverse;
 }
 
@@ -1999,22 +1997,10 @@
   background: #ff2020;
   border-radius: 50%;
   box-shadow:
-    0 0 5px rgba(255, 40, 40, 1),
-    0 0 10px rgba(255, 40, 40, .7),
-    0 0 16px rgba(255, 80, 80, .4);
-  animation: bossEyePulse 1.6s ease-in-out infinite;
+    0 0 6px rgba(255, 60, 60, 1),
+    0 0 12px rgba(255, 40, 40, .8),
+    0 0 20px rgba(255, 80, 80, .5);
 }
-@keyframes bossEyePulse {
-  0%, 100% { box-shadow:
-    0 0 5px rgba(255, 40, 40, 1),
-    0 0 10px rgba(255, 40, 40, .7),
-    0 0 16px rgba(255, 80, 80, .4); }
-  50%      { box-shadow:
-    0 0 7px rgba(255, 80, 80, 1),
-    0 0 16px rgba(255, 40, 40, .95),
-    0 0 26px rgba(255, 60, 60, .6); }
-}
-
 .boss .mouth {
   border-bottom-color: #3a0808;
   background: rgba(0, 0, 0, .35);
@@ -2075,21 +2061,15 @@
       rgba(180, 20, 20, .15) 75%,
       transparent 100%);
   border: 2px solid rgba(255, 80, 80, .85);
-  box-shadow:
-    inset 0 0 14px rgba(255, 60, 60, .55),
-    0 0 20px rgba(255, 40, 40, .75);
+box-shadow:
+    inset 0 0 18px rgba(255, 70, 70, .65),
+    0 0 26px rgba(255, 40, 40, .85);
+  /* Pulso barato: solo opacidad */
   animation: telegraphPulse .38s ease-in-out infinite alternate;
-  transform-origin: 0 50%;
 }
-.boss-telegraph.active { opacity: 1; }
-
 @keyframes telegraphPulse {
-  0%   { filter: brightness(1);   box-shadow:
-    inset 0 0 14px rgba(255, 60, 60, .55),
-    0 0 20px rgba(255, 40, 40, .75); }
-  100% { filter: brightness(1.4); box-shadow:
-    inset 0 0 22px rgba(255, 100, 100, .85),
-    0 0 36px rgba(255, 40, 40, 1); }
+  0%   { opacity: 0.75; }
+  100% { opacity: 1; }
 }
 
 /* Ataques horizontales (cortos y amplios): rectángulo delante */
@@ -2714,8 +2694,6 @@ body.touch-mode { -webkit-touch-callout: none; }
         <div class="bonfire-glow"></div>
         <div class="bonfire-base"></div>
         <div class="bonfire-flame"></div>
-        <div class="bonfire-ember"></div>
-        <div class="bonfire-ember"></div>
         <div class="bonfire-ember"></div>
         <div class="bonfire-prompt">Pulsa E para descansar</div>
       </div>
