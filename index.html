@@ -2394,6 +2394,7 @@ body.touch-mode { -webkit-touch-callout: none; }
 .touch-btn.lock { right: 20px;  bottom: 222px; width: 56px; height: 56px; font-size: 22px; }
 .touch-btn.bag  { right: 86px;  bottom: 222px; width: 56px; height: 56px; font-size: 22px; }
 .touch-btn.item { right: 152px; bottom: 222px; width: 56px; height: 56px; font-size: 22px; }
+.touch-btn.run  { right: 218px; bottom: 222px; width: 56px; height: 56px; font-size: 22px; }
 
 /* Botón contextual E (aparece solo cuando hay algo que interactuar) */
 .touch-btn.interact {
@@ -2417,6 +2418,7 @@ body.touch-mode { -webkit-touch-callout: none; }
 
 /* Safe-area para iPhone con notch */
 @supports (padding: max(0px)) {
+    .touch-btn.run    { right: max(218px, calc(env(safe-area-inset-right) + 218px)); bottom: max(222px, calc(env(safe-area-inset-bottom) + 222px)); }
   .touch-btn.attack { right: max(20px, env(safe-area-inset-right)); bottom: max(20px, env(safe-area-inset-bottom)); }
   .touch-btn.defend { right: max(20px, env(safe-area-inset-right)); bottom: max(130px, calc(env(safe-area-inset-bottom) + 130px)); }
   .touch-btn.dash   { right: max(130px, calc(env(safe-area-inset-right) + 130px)); bottom: max(20px, env(safe-area-inset-bottom)); }
@@ -2429,6 +2431,7 @@ body.touch-mode { -webkit-touch-callout: none; }
 
 /* Pantallas muy pequeñas: reducir un poco */
 @media (max-width: 480px), (max-height: 520px) {
+    .touch-btn.run   { bottom: 196px; }
   .touch-btn.attack { width: 84px; height: 84px; font-size: 34px; }
   .touch-btn.defend { width: 68px; height: 68px; bottom: 116px; }
   .touch-btn.dash   { width: 68px; height: 68px; right: 116px; }
@@ -2750,6 +2753,7 @@ body.touch-mode { -webkit-touch-callout: none; }
       <button class="touch-btn lock"     id="btnLock"     aria-label="Fijar objetivo">🎯</button>
       <button class="touch-btn bag"      id="btnBag"      aria-label="Inventario">🎒</button>
       <button class="touch-btn item"     id="btnItem"     aria-label="Usar objeto">🧪</button>
+            <button class="touch-btn run"      id="btnRun"      aria-label="Correr">🏃</button>
 
       <button class="touch-btn interact" id="btnInteract" aria-label="Interactuar">E</button>
 
@@ -3973,6 +3977,7 @@ const moveVec = {
     let lockedTarget = null;   // 'enemy' | 'boss' | null
   let lockedOn = false;      // true si lockedTarget !== null
   let shiftHeld = false;
+    let runBtnHeld = false;
   let inventoryOpen = false;
   let itemPickerOpen = false;
   let pickupWindowOpen = false;
@@ -6619,10 +6624,8 @@ case 'flank': {
           let speed = p.defending ? SPEED_DEFEND : SPEED;
           if (p.attacking) speed *= 0.55;
 
-          // Auto-run en táctil: joystick empujado al máximo
-          const wantRun = isTouchDevice
-            ? (useContinuousInput && moveVec.magnitude > 0.85)
-            : shiftHeld;
+                    // Correr: Shift en teclado O botón dedicado en táctil
+          const wantRun = shiftHeld || runBtnHeld;
 
           const canRun = wantRun && !p.defending && !p.attacking && p.stamina > 0;
           if (canRun) speed *= RUN_MULTIPLIER;
@@ -6885,6 +6888,7 @@ case 'flank': {
   for (const k in keys) keys[k] = false;
   shiftHeld = false;
   setDefending(false);
+    runBtnHeld = false;
   // NUEVO: resetear joystick
   moveVec.x = 0; moveVec.y = 0; moveVec.active = false; moveVec.magnitude = 0;
   const jb = document.getElementById('joystickBase');
@@ -7062,6 +7066,10 @@ function initTouchControls() {
   bindTap('btnBag',   () => toggleInventory(),  true);
   bindTap('btnItem',  () => useEquippedBottle());
 bindTap('btnInteract', () => handleEInteraction(),  true);
+  bindHold('btnRun',
+    () => { runBtnHeld = true; },
+    () => { runBtnHeld = false; });
+
 }
 
 /* Muestra el botón E solo cuando hay algo interactuable cerca */
