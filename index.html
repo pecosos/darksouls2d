@@ -130,7 +130,7 @@
     font-size: 30px;
     line-height: 1;
     text-shadow: 0 0 10px rgba(160, 210, 255, .65);
-    filter: drop-shadow(0 0 6px rgba(120, 200, 255, .45));
+    
     animation: padItemPop .18s ease-out 1;
   }
   .dpad-slot .pad-item[data-qty]::after {
@@ -177,8 +177,7 @@
     align-items: center;
     justify-content: center;
     background: rgba(3, 6, 12, .72);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
+    
     z-index: 9999;
     opacity: 0;
     pointer-events: none;
@@ -259,7 +258,7 @@
     border: 1px solid rgba(120, 170, 255, .28);
     box-shadow: inset 0 0 10px rgba(80, 140, 255, .12);
     text-shadow: 0 0 8px rgba(160, 210, 255, .55);
-    filter: drop-shadow(0 0 4px rgba(120, 200, 255, .35));
+    
   }
 
   .inv-slot {
@@ -277,7 +276,7 @@
     justify-content: center;
     font-size: 20px;
     line-height: 1;
-    filter: drop-shadow(0 0 3px rgba(120, 200, 255, .35));
+   
     transition: border-color .14s ease, box-shadow .14s ease, background .14s ease, transform .14s ease;
     cursor: pointer;
   }
@@ -357,8 +356,7 @@
     align-items: center;
     justify-content: center;
     background: rgba(3, 6, 12, .78);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
+    
     z-index: 10000;
     opacity: 0;
     pointer-events: none;
@@ -492,7 +490,7 @@
     flex-shrink: 0;
     position: relative;
     text-shadow: 0 0 8px rgba(160, 210, 255, .55);
-    filter: drop-shadow(0 0 4px rgba(120, 200, 255, .35));
+    
   }
   .item-picker-item .ip-icon[data-qty]::after {
     content: attr(data-qty);
@@ -835,25 +833,24 @@
     transform-origin: 0 0;
     will-change: transform;
   }
-  .aim-arrow {
-    position: absolute;
-    left: 20px;
-    top: -4px;
-    width: 0;
-    height: 0;
-    border-top: 4px solid transparent;
-    border-bottom: 4px solid transparent;
-    border-left: 8px solid rgba(190, 225, 255, 0.75);
-    filter: drop-shadow(0 0 5px rgba(140, 200, 255, 0.65));
-    animation: aimArrowPulse 1.8s ease-in-out infinite;
-  }
+.aim-arrow {
+  position: absolute;
+  left: 20px;
+  top: -4px;
+  width: 0;
+  height: 0;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  border-left: 8px solid rgba(190, 225, 255, 0.75);
+  animation: aimArrowPulse 1.8s ease-in-out infinite;
+}
   @keyframes aimArrowPulse {
     0%, 100% { opacity: 0.40; }
     50%      { opacity: 0.90; }
   }
   .entity.player.locked-aim .aim-arrow {
     border-left-color: rgba(255, 130, 130, 0.95);
-    filter: drop-shadow(0 0 6px rgba(255, 90, 90, 0.85));
+    
   }
 
   .sword {
@@ -938,31 +935,27 @@
   .player.no-sword .sword { display: none; }
   .player.no-shield .shield { display: none; }
 
-  .slash {
-    position: absolute;
-    left: 50%; top: 45%;
-    width: 62px; height: 62px;
-    margin: -31px 0 0 -31px;
-    pointer-events: none;
-    opacity: 0;
-    border-radius: 50%;
-    border: 4px solid transparent;
-    border-top-color: rgba(245, 252, 255, 0.95);
-    border-right-color: rgba(160, 210, 255, 0.6);
-    filter:
-      drop-shadow(0 0 8px rgba(160, 220, 255, 0.95))
-      drop-shadow(0 0 18px rgba(90, 170, 255, 0.55));
-    transform: rotate(-40deg) scale(0.4);
-    transform-origin: 50% 50%;
-    z-index: 10;
-  }
+.slash {
+  position: absolute;
+  left: 50%; top: 45%;
+  width: 62px; height: 62px;
+  margin: -31px 0 0 -31px;
+  pointer-events: none;
+  opacity: 0;
+  border-radius: 50%;
+  border: 4px solid transparent;
+  border-top-color: rgba(245, 252, 255, 0.95);
+  border-right-color: rgba(160, 210, 255, 0.6);
+  filter: drop-shadow(0 0 10px rgba(160, 220, 255, 0.9));
+  transform: rotate(-40deg) scale(0.4);
+  transform-origin: 50% 50%;
+  z-index: 10;
+}
   .enemy .slash {
-    border-top-color: rgba(255, 220, 200, 0.95);
-    border-right-color: rgba(255, 130, 130, 0.6);
-    filter:
-      drop-shadow(0 0 8px rgba(255, 160, 130, 0.95))
-      drop-shadow(0 0 18px rgba(220, 60, 60, 0.55));
-  }
+  border-top-color: rgba(255, 220, 200, 0.95);
+  border-right-color: rgba(255, 130, 130, 0.6);
+  filter: drop-shadow(0 0 10px rgba(255, 160, 130, 0.9));
+}
 
   .head {
     position: absolute;
@@ -1267,11 +1260,9 @@
     }
   }
 
-  .entity.dashing {
-    filter:
-      drop-shadow(0 0 14px rgba(120, 200, 255, 1))
-      drop-shadow(0 0 6px rgba(220, 240, 255, 0.95));
-  }
+.entity.dashing {
+  filter: drop-shadow(0 0 12px rgba(120, 200, 255, 0.95));
+}
   .entity.dashing .sprite { animation: dashStretch 0.18s cubic-bezier(.2,.8,.3,1); }
   @keyframes dashStretch {
     0%   { transform: scaleX(1.28) scaleY(0.90); filter: brightness(1.7); }
@@ -1882,7 +1873,7 @@
     rgba(230, 70, 10, 0.5) 60%,
     rgba(140, 20, 0, 0.2) 78%,
     transparent 90%);
-  filter: blur(3px);
+  
   animation: bombExplode 0.55s cubic-bezier(.2, .8, .3, 1) forwards;
 }
 @keyframes bombExplode {
@@ -1913,17 +1904,15 @@
 
 /* Enemigo ardiendo */
 .entity.burning {
-  filter:
-    drop-shadow(0 0 10px rgba(255, 130, 20, 0.95))
-    drop-shadow(0 0 22px rgba(255, 60, 0, 0.65));
+  
 }
 .entity.burning .sprite {
   animation: burnFlicker 0.35s ease-in-out infinite alternate;
 }
 @keyframes burnFlicker {
-  0%   { filter: brightness(1)   sepia(0.15) hue-rotate(-10deg); }
-  50%  { filter: brightness(1.4) sepia(0.55) hue-rotate(-25deg) saturate(1.6); }
-  100% { filter: brightness(1.25) sepia(0.35) hue-rotate(-18deg) saturate(1.3); }
+  0%   { opacity: 1; }
+  50%  { opacity: 0.75; }
+  100% { opacity: 0.9; }
 }
 
 /* Llamitas sobre el enemigo ardiendo */
@@ -1942,7 +1931,9 @@
   bottom: 0;
   font-size: 14px;
   line-height: 1;
-  filter: drop-shadow(0 0 8px rgba(255, 160, 40, 0.95));
+  text-shadow:
+    0 0 6px rgba(255, 160, 40, 1),
+    0 0 12px rgba(255, 120, 20, 0.8);
   animation: burnFlameUp 0.9s ease-out infinite;
 }
 .burn-flame span:nth-child(1) { left: 10%; animation-delay: 0s;   }
@@ -2040,9 +2031,7 @@
 .boss .slash {
   border-top-color: rgba(255, 200, 200, .95);
   border-right-color: rgba(255, 80, 80, .7);
-  filter:
-    drop-shadow(0 0 10px rgba(255, 100, 100, .95))
-    drop-shadow(0 0 24px rgba(220, 40, 40, .65));
+  filter: drop-shadow(0 0 12px rgba(255, 100, 100, 0.9));
 }
 
 /* ---------- Telegraph (área de aviso) ---------- */
@@ -2200,9 +2189,7 @@ box-shadow:
 
 /* Dashing (embestida): estela roja */
 .boss.dashing {
-  filter:
-    drop-shadow(0 0 16px rgba(255, 60, 60, 1))
-    drop-shadow(0 0 30px rgba(255, 40, 40, .75));
+  filter: drop-shadow(0 0 14px rgba(255, 60, 60, 0.95));
 }
 .boss.dashing .sprite {
   animation: bossDashStretch .18s ease-out 1;
