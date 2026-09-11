@@ -1408,7 +1408,47 @@
     animation: idleBob 2.2s ease-in-out infinite;
   }
 
-   
+   /* ============================================================
+   CAMINITO GUÍA
+   ============================================================ */
+.guide-dot {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 2;
+  animation: guideDotPulse 1.8s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+/* Portal de niebla → azul hielo */
+.guide-dot.to-gate {
+  background: radial-gradient(circle,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(200, 235, 255, 0.75) 45%,
+    rgba(140, 200, 255, 0.25) 100%);
+  box-shadow:
+    0 0 8px rgba(160, 220, 255, 0.9),
+    0 0 18px rgba(100, 180, 255, 0.55);
+}
+
+/* Jefe → rojo carmesí */
+.guide-dot.to-boss {
+  background: radial-gradient(circle,
+    rgba(255, 240, 240, 0.95) 0%,
+    rgba(255, 140, 140, 0.75) 45%,
+    rgba(200, 40, 40, 0.25) 100%);
+  box-shadow:
+    0 0 8px rgba(255, 120, 120, 0.9),
+    0 0 18px rgba(220, 40, 40, 0.55);
+}
+
+@keyframes guideDotPulse {
+  0%, 100% { opacity: 0.35; transform: scale(0.85); }
+  50%      { opacity: 1;    transform: scale(1.15); }
+}
      /* ============================================================
      HOGUERA
      ============================================================ */
@@ -3247,7 +3287,63 @@ let WALLS = ZONE1_WALLS;
     world.querySelectorAll('.wall, .fog-gate').forEach(el => el.remove());
     renderWalls();
     renderGates();
+    renderGuidePaths();
   }
+
+
+  /* ============================================================
+   CAMINITO GUÍA — dibuja piedrecitas desde un origen hasta un destino
+   ============================================================ */
+function renderGuidePaths() {
+  const origins = ZONE_GUIDE_ORIGINS[currentZone];
+  if (!origins) return;
+
+  // 1) Camino hacia el portal de niebla
+  const gate = (ZONE_GATES[currentZone] || [])[0];
+  if (gate) {
+    const origin = origins.toGate;
+    const destX = gate.x + gate.w / 2;
+    const destY = gate.y + gate.h / 2;
+    drawGuidePath(origin.x, origin.y, destX, destY, 'to-gate');
+  }
+
+  // 2) Camino hacia el jefe (solo si la zona tiene jefe)
+  const bossSpawn = ZONE_BOSS_SPAWN[currentZone];
+  if (bossSpawn && origins.toBoss) {
+    const origin = origins.toBoss;
+    drawGuidePath(origin.x, origin.y, bossSpawn.x, bossSpawn.y, 'to-boss');
+  }
+}
+
+/* Dibuja las piedrecitas en línea recta desde (x1,y1) hasta (x2,y2) */
+function drawGuidePath(x1, y1, x2, y2, className) {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const dist = Math.hypot(dx, dy);
+
+  // Espaciado entre piedrecitas (ajústalo a gusto: menos = más juntas)
+  const SPACING = 55;
+  const steps = Math.max(2, Math.floor(dist / SPACING));
+
+  for (let i = 1; i <= steps; i++) {
+    const t = i / (steps + 1);
+    const px = x1 + dx * t;
+    const py = y1 + dy * t;
+
+    const el = document.createElement('div');
+    el.className = 'guide-dot ' + className;
+
+    // Cada piedrecita tiene un delay distinto → efecto "flujo"
+    const delay = (i * 0.12) % 1.8;
+    el.style.animationDelay = (-delay) + 's';
+
+    // Posición: los dots usan transform para ir con el translate3d del world
+    el.style.left = px + 'px';
+    el.style.top  = py + 'px';
+
+    world.appendChild(el);
+  }
+}
 
 
 
@@ -3927,6 +4023,24 @@ function hasLineOfSight(x1, y1, x2, y2) {
       { x:    0, y: 900, w: 100, h: 200, target: 1, spawnX: 2280, spawnY: 1000 },
     ],
   };
+
+  /* ============================================================
+   ORÍGENES DEL CAMINITO GUÍA
+   ============================================================
+   Cada zona indica desde dónde sale el caminito hacia el portal
+   y hacia el jefe. Normalmente el spawn del jugador.
+   ============================================================ */
+const ZONE_GUIDE_ORIGINS = {
+  1: {
+    // Sale cerca de donde aparece el jugador (centro del mapa)
+    toGate: { x: 1250, y: 1250 },   // centro → va al portal en (2450, 1000)
+  },
+  2: {
+    // Sale desde donde llegas al entrar (esquina izquierda)
+    toGate: { x: 250,  y: 1000 },   // → vuelve al portal (50, 1000)
+    toBoss: { x: 250,  y: 1000 },   // → va al jefe en (1500, 1200)
+  },
+};
 
    /* Spawn del enemigo por zona.
     // Si una zona no aparece aquí, esa zona no tiene enemigo. */
