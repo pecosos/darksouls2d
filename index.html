@@ -3083,6 +3083,13 @@ if (isTouchDevice) {
 
   const PLAYER_STUN_DURATION = 1.0;
 
+  /* ============================================================
+   LÍMITE DE FPS EN MÓVIL
+   ============================================================ */
+const FPS_CAP_TOUCH = 30;
+const FRAME_MIN_MS_TOUCH = 1000 / FPS_CAP_TOUCH;   // 33.33 ms
+let lastProcessedFrame = 0;
+
     const BONFIRE_INTERACT_RANGE = 95;   // distancia para poder descansar
   const BONFIRE_SAFE_RADIUS    = 280;  // si hay un enemigo dentro de este radio, no puedes descansar
   
@@ -6599,6 +6606,13 @@ window.addEventListener('orientationchange', updatePauseState);
      ============================================================ */
   function tick(now) {
     if (gamePaused) return;
+     if (isTouchDevice) {
+      if (now - lastProcessedFrame < FRAME_MIN_MS_TOUCH - 2) {
+        rafId = requestAnimationFrame(tick);
+        return;
+      }
+      lastProcessedFrame = now;
+    }
     const dt = Math.min((now - last) / 1000, 0.05);
     last = now;
 
