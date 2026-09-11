@@ -3493,14 +3493,42 @@ function mostrarTituloZona(zone) {
   /* ============================================================
    PATHFINDING A* PARA LA IA DEL ENEMIGO
    ============================================================ */
-const NAV_CELL = 25;                             // tamaño de celda
-const NAV_W    = Math.ceil(WORLD_SIZE / NAV_CELL); // 100
-const NAV_H    = Math.ceil(WORLD_SIZE / NAV_CELL); // 100
-let navGrid = null;                              // 1 = bloqueado
+const NAV_CELL  = 25;
+const NAV_W     = Math.ceil(WORLD_SIZE / NAV_CELL);
+const NAV_H     = Math.ceil(WORLD_SIZE / NAV_CELL);
+const NAV_TOTAL = NAV_W * NAV_H;
+let navGrid = null;
+
+/* --- Buffers reutilizables (se reservan UNA SOLA VEZ) --- */
+const _gScore   = new Float32Array(NAV_TOTAL).fill(Infinity);
+const _fScore   = new Float32Array(NAV_TOTAL).fill(Infinity);
+const _cameFrom = new Int32Array(NAV_TOTAL).fill(-1);
+const _closed   = new Uint8Array(NAV_TOTAL);
+const _inOpen   = new Uint8Array(NAV_TOTAL);
+
+/* Lista de celdas usadas en la última búsqueda. Solo esas se
+   resetean al inicio de la siguiente. */
+const _touched = [];
+
+/* Buffer reutilizable para la lista "open" */
+const _openList = [];
+
+/* --- Reset rápido de las celdas tocadas --- */
+function resetNavBuffers() {
+  for (let i = 0; i < _touched.length; i++) {
+    const idx = _touched[i];
+    _gScore[idx]   = Infinity;
+    _fScore[idx]   = Infinity;
+    _cameFrom[idx] = -1;
+    _closed[idx]   = 0;
+    _inOpen[idx]   = 0;
+  }
+  _touched.length = 0;
+}
 
 function buildNavGrid() {
   navGrid = new Uint8Array(NAV_W * NAV_H);
-  const padX = 24;   // mitad del cuerpo del enemigo + margen
+  const padX = 24;
   const padY = 34;
 
   for (let gy = 0; gy < NAV_H; gy++) {
@@ -3547,6 +3575,9 @@ function heuristicOctile(ax, ay, bx, by) {
 function findNavPath(startX, startY, goalX, goalY) {
   if (!navGrid) return null;
 
+  // -------- Limpiar SOLO las celdas usadas la última vez --------
+  resetNavBuffers();
+
   let sgx = clamp(Math.floor(startX / NAV_CELL), 0, NAV_W - 1);
   let sgy = clamp(Math.floor(startY / NAV_CELL), 0, NAV_H - 1);
   let tgx = clamp(Math.floor(goalX  / NAV_CELL), 0, NAV_W - 1);
@@ -3563,34 +3594,30 @@ function findNavPath(startX, startY, goalX, goalY) {
     tgx = tAlt.x; tgy = tAlt.y;
   }
 
-  const total    = NAV_W * NAV_H;
-  const gScore   = new Float32Array(total).fill(Infinity);
-  const fScore   = new Float32Array(total).fill(Infinity);
-  const cameFrom = new Int32Array(total).fill(-1);
-  const closed   = new Uint8Array(total);
-  const inOpen   = new Uint8Array(total);
-
   const startIdx = sgy * NAV_W + sgx;
   const goalIdx  = tgy * NAV_W + tgx;
 
-  gScore[startIdx] = 0;
-  fScore[startIdx] = heuristicOctile(sgx, sgy, tgx, tgy);
+  _gScore[startIdx] = 0;
+  _fScore[startIdx] = heuristicOctile(sgx, sgy, tgx, tgy);
+  _touched.push(startIdx);
 
-  const open = [startIdx];
-  inOpen[startIdx] = 1;
+  _openList.length = 0;
+  _openList.push(startIdx);
+  _inOpen[startIdx] = 1;
 
-  while (open.length > 0) {
+  while (_openList.length > 0) {
+    // Elegir el de menor fScore (búsqueda lineal)
     let bestI = 0;
-    for (let i = 1; i < open.length; i++) {
-      if (fScore[open[i]] < fScore[open[bestI]]) bestI = i;
+    for (let i = 1; i < _openList.length; i++) {
+      if (_fScore[_openList[i]] < _fScore[_openList[bestI]]) bestI = i;
     }
-    const current = open[bestI];
-    open[bestI] = open[open.length - 1];
-    open.pop();
-    inOpen[current] = 0;
+    const current = _openList[bestI];
+    _openList[bestI] = _openList[_openList.length - 1];
+    _openList.pop();
+    _inOpen[current] = 0;
 
-    if (closed[current]) continue;
-    closed[current] = 1;
+    if (_closed[current]) continue;
+    _closed[current] = 1;
 
     if (current === goalIdx) {
       const path = [];
@@ -3602,7 +3629,7 @@ function findNavPath(startX, startY, goalX, goalY) {
           x: gx * NAV_CELL + NAV_CELL / 2,
           y: gy * NAV_CELL + NAV_CELL / 2,
         });
-        n = cameFrom[n];
+        n = _cameFrom[n];
       }
       path.reverse();
       return path;
@@ -3611,26 +3638,34 @@ function findNavPath(startX, startY, goalX, goalY) {
     const cgy = Math.floor(current / NAV_W);
     const cgx = current % NAV_W;
 
-    for (const [dx, dy, cost] of NAV_DIRS) {
+    for (let k = 0; k < NAV_DIRS.length; k++) {
+      const dir = NAV_DIRS[k];
+      const dx = dir[0], dy = dir[1], cost = dir[2];
+
       const ngx = cgx + dx;
       const ngy = cgy + dy;
       if (!navCellFree(ngx, ngy)) continue;
       const nIdx = ngy * NAV_W + ngx;
-      if (closed[nIdx]) continue;
+      if (_closed[nIdx]) continue;
 
       // Evitar cortar esquinas en diagonal
       if (dx !== 0 && dy !== 0) {
         if (!navCellFree(cgx + dx, cgy) || !navCellFree(cgx, cgy + dy)) continue;
       }
 
-      const tentative = gScore[current] + cost;
-      if (tentative < gScore[nIdx]) {
-        cameFrom[nIdx] = current;
-        gScore[nIdx]   = tentative;
-        fScore[nIdx]   = tentative + heuristicOctile(ngx, ngy, tgx, tgy);
-        if (!inOpen[nIdx]) {
-          inOpen[nIdx] = 1;
-          open.push(nIdx);
+      const tentative = _gScore[current] + cost;
+      if (tentative < _gScore[nIdx]) {
+        // Primera vez que descubrimos esta celda en esta búsqueda:
+        // marcarla para reset posterior
+        if (_gScore[nIdx] === Infinity) {
+          _touched.push(nIdx);
+        }
+        _cameFrom[nIdx] = current;
+        _gScore[nIdx]   = tentative;
+        _fScore[nIdx]   = tentative + heuristicOctile(ngx, ngy, tgx, tgy);
+        if (!_inOpen[nIdx]) {
+          _inOpen[nIdx] = 1;
+          _openList.push(nIdx);
         }
       }
     }
